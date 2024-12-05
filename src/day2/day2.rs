@@ -41,10 +41,8 @@ fn part_1(contents: &str) -> u32 {
     safe_reports
 }
 
-fn is_safe(levels: &Vec<i32>, has_removed: bool) -> bool {
+fn is_safe(levels: &Vec<i32>) -> bool {
     let increasing = levels[1] > levels[0];
-    let mut safe: bool = true;
-
     for (index, level) in levels.iter().enumerate() {
         if index == 0 {
             continue;
@@ -52,37 +50,19 @@ fn is_safe(levels: &Vec<i32>, has_removed: bool) -> bool {
         let diff = level - levels[index - 1];
         if increasing {
             if diff.is_negative() {
-                if has_removed {
-                    return false;
-                } else {
-                    let mut temp_levels = levels.clone();
-                    temp_levels.remove(index);
-                    return is_safe(&temp_levels, true);
-                }
+                return false;
             }
         } else if diff.is_positive() {
-            if has_removed {
-                return false;
-            } else {
-                let mut temp_levels = levels.clone();
-                temp_levels.remove(index);
-                return is_safe(&temp_levels, true);
-            }
+            return false;
         }
         match diff.abs() {
             1..=3 => continue,
             _ => {
-                if has_removed {
-                    return false;
-                } else {
-                    let mut temp_levels = levels.clone();
-                    temp_levels.remove(index);
-                    return is_safe(&temp_levels, true);
-                }
+                return false;
             }
         }
     }
-    safe
+    true
 }
 
 fn part_2(contents: &str) -> u32 {
@@ -94,8 +74,17 @@ fn part_2(contents: &str) -> u32 {
             .map(Result::unwrap)
             .collect();
 
-        if is_safe(&levels, false) {
-            safe_reports += 1;
+        if is_safe(&levels) {
+            safe_reports += 1
+        } else {
+            for index in 0usize..levels.len() {
+                let mut levels_clone = levels.clone();
+                levels_clone.remove(index);
+                if is_safe(&levels_clone) {
+                    safe_reports += 1;
+                    break;
+                }
+            }
         }
     }
     safe_reports
