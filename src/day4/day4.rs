@@ -50,9 +50,9 @@ fn check_for_word(data: &[String], rows: i32, cols: i32, char: char, row: i32, c
 
 fn main() {
     let input_file_path = "./src/day4/input.txt";
-    let mut contents = fs::read_to_string(input_file_path).unwrap();
+    let contents = fs::read_to_string(input_file_path).unwrap();
 
-    let _test = "
+    let test = "
 MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -64,7 +64,7 @@ SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
 
-    let mut data: Vec<_> = contents
+    let mut data: Vec<_> = test
         .lines()
         .map(|line| {
             let line = line.trim();
@@ -72,11 +72,13 @@ MXMXAXMASX";
         })
         .collect();
 
+    // TODO: only for test day
     data.remove(0);
+
     let rows = data.len() as i32;
     let cols = data[0].len() as i32;
     println!("rows {:?} cols {:?}", rows, cols);
-    //print!("{test}");
+    print!("{test}");
 
     let mut count: u32 = 0;
     for (row, chars) in data.iter().enumerate() {
