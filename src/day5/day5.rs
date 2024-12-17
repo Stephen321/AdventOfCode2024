@@ -87,7 +87,7 @@ fn main() {
     let mut count = 0;
     let mut middle_sum = 0;
 
-    let data: Vec<_> = contents
+    let data: Vec<_> = test
         .lines()
         .map(|line| {
             let line = line.trim();
@@ -100,28 +100,31 @@ fn main() {
                     .map(Result::unwrap)
                     .collect();
 
-                let mut pages_must_follow: Vec<u32> = vec![];
+                let mut broken_rules: Vec<&Rule> = vec![];
 
                 for page in &update {
-                    pages_must_follow.retain(|p| p != page);
+                    broken_rules.retain(|Rule { left, right }| right != page);
                     for rule in &rules {
                         let side = rule.get_side(*page);
                         if let RuleSide::Left = side {
                             if update.contains(&rule.right) {
-                                println!("rule added: {:?}", rule);
-                                pages_must_follow.push(rule.right);
+                                broken_rules.push(rule);
                             }
                         }
                     }
                 }
 
-                if pages_must_follow.is_empty() {
+                if broken_rules.is_empty() {
                     count += 1;
                     let middle_index = update.len() / 2;
                     let middle = update.get(middle_index).unwrap();
                     middle_sum += middle;
+                } else {
+                    println!(
+                        "wrong update {:?} - broken rules - {:?}",
+                        update, broken_rules
+                    );
                 }
-                println!("update {:?} - pages left - {:?}", update, pages_must_follow);
             }
         })
         .collect();
