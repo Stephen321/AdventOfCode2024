@@ -1,10 +1,59 @@
-use std::{fs, num::ParseIntError, str::FromStr, string::ParseError};
+use std::{fs, num::ParseIntError, str::FromStr};
+
+enum RuleSide {
+    Left,
+    Right,
+    None,
+}
+struct RuleParseError;
+
+#[derive(Debug)]
+struct Rule {
+    left: u32,
+    right: u32,
+}
+
+impl Rule {
+    fn new(left: u32, right: u32) -> Self {
+        return Self { left, right };
+    }
+    fn get_side(&self, page: u32) -> RuleSide {
+        if self.left == page {
+            return RuleSide::Left;
+        }
+        if self.left == page {
+            return RuleSide::Right;
+        }
+        RuleSide::None
+    }
+}
+
+impl From<ParseIntError> for RuleParseError {
+    fn from(_value: ParseIntError) -> Self {
+        Self {}
+    }
+}
+
+impl FromStr for Rule {
+    type Err = RuleParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut split = s.split('|');
+        let left_str = split.next().ok_or(RuleParseError)?;
+        let right_str = split.next().ok_or(RuleParseError)?;
+
+        let left: u32 = left_str.parse()?;
+        let right: u32 = right_str.parse()?;
+
+        Ok(Rule::new(left, right))
+    }
+}
 
 fn main() {
     let input_file_path = "./src/day5/input.txt";
     let contents = fs::read_to_string(input_file_path).unwrap();
 
-    let _test = "47|53
+    let test = "47|53
 97|13
 97|61
 97|47
@@ -33,62 +82,53 @@ fn main() {
 61,13,29
 97,13,75,29,47";
 
-    struct Rule {
-        left: u32,
-        right: u32,
-    }
+    let mut rules: Vec<Rule> = vec![];
 
-    impl Rule {
-        fn new(left: u32, right: u32) -> Self {
-            return Self { left, right };
-        }
-    }
+    let mut count = 0;
+    let mut middle_sum = 0;
 
-    struct RuleParseError;
-    impl From<ParseIntError> for RuleParseError {
-        fn from(_value: ParseIntError) -> Self {
-            Self {}
-        }
-    }
-
-    impl FromStr for Rule {
-        type Err = RuleParseError;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let mut split = s.split('|');
-            let left_str = split.next().ok_or(RuleParseError)?;
-            let right_str = split.next().ok_or(RuleParseError)?;
-
-            let left: u32 = left_str.parse()?;
-            let right: u32 = right_str.parse()?;
-
-            Ok(Rule::new(left, right))
-        }
-    }
-
-    let rules: Vec<Rule>;
-    let updates: Vec<Vec<u32>>;
-
-    let mut data: Vec<_> = contents
+    let data: Vec<_> = contents
         .lines()
         .map(|line| {
             let line = line.trim();
-            _ = Rule::from_str(line)
-                .and_then(|rule| {
-                    rules.push(rule);
-                    Ok(rule)
-                })
-                .or_else(|_| {
-                    let split = line.split(',');
-                });
+            if let Ok(rule) = Rule::from_str(line) {
+                rules.push(rule);
+            } else if !line.is_empty() {
+                let update: Vec<u32> = line
+                    .split(',')
+                    .map(str::parse)
+                    .map(Result::unwrap)
+                    .collect();
+
+                let mut pages_must_follow: Vec<u32> = vec![];
+
+                for page in &update {
+                    pages_must_follow.retain(|p| p != page);
+                    for rule in &rules {
+                        let side = rule.get_side(*page);
+                        if let RuleSide::Left = side {
+                            if update.contains(&rule.right) {
+                                println!("rule added: {:?}", rule);
+                                pages_must_follow.push(rule.right);
+                            }
+                        }
+                    }
+                }
+
+                if pages_must_follow.is_empty() {
+                    count += 1;
+                    let middle_index = update.len() / 2;
+                    let middle = update.get(middle_index).unwrap();
+                    middle_sum += middle;
+                }
+                println!("update {:?} - pages left - {:?}", update, pages_must_follow);
+            }
         })
         .collect();
 
-    let mut count = 0;
-
     // Part 1
-    println!("{:?}", count);
+    println!("{:?} - sum {:?}", count, middle_sum);
 
     // Part 2
-    println!("{:?}", count);
+    println!("{:?} - sum {:?}", count, middle_sum);
 }
